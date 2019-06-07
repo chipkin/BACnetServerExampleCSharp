@@ -1,0 +1,29 @@
+stages:
+  - build
+
+Build:
+  stage: build
+  tags:
+    - windows
+    - msvs
+  before_script:
+    # Add MSBuild.exe to path
+    - set PATH=%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin
+    # Update the CIBuildVersion.cs
+    - cd BACnetServerExample\BACnetServerExample
+    - "echo namespace BACnetServerExample{static class CIBuildVersion { public const int CIBUILDNUMBER = %CI_PIPELINE_IID%;}} > CIBuildVersion.cs"
+    - type CIBuildVersion.cs
+    - cd ..\..\
+  script:
+    # Create the bin directory if it does not exist
+    - cd BACnetServerExample\BACnetServerExample
+    # Restore any nuget or other dependencies needed for the project
+    - msbuild /t:Restore /p:Configuration=Release /p:Platform=AnyCPU
+    # Build and package the project in an apk for android
+    - msbuild /p:Configuration=Release /p:Platform=AnyCPU
+    - cd bin\..\
+    - dir
+  artifacts:
+    paths:
+      - bin\netcoreapp2.1\BACnetServerExample.dll
+  
