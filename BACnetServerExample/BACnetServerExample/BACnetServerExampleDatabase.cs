@@ -14,6 +14,10 @@ namespace BACnetServerExample
         public const UInt32 COUNT_BINARY_VALUE = 3;
         public const UInt32 COUNT_MULTI_STATE_INPUT = 3;
         public const UInt32 COUNT_MULTI_STATE_VALUE = 3;
+        public const UInt32 COUNT_CHARACTER_STRING_VALUE = 3;
+        public const UInt32 COUNT_POSITIVE_INTEGER_VALUE = 3;
+        public const UInt32 COUNT_DATE_VALUE = 3;
+        public const UInt32 COUNT_TIME_VALUE = 3;
 
         public class ExampleDatabaseBase
         {
@@ -69,6 +73,46 @@ namespace BACnetServerExample
                 "North by west (NbW)" }; 
         }
 
+        public class ExampleDatabaseCharacterString : ExampleDatabaseBase
+        {
+            public string presentValue;
+        }
+        public class ExampleDatabasePositiveIntergerValue : ExampleDatabaseBase
+        {
+            public UInt32 presentValue;
+        }
+        public class ExampleDatabaseDateValue : ExampleDatabaseBase
+        {
+            public Byte presentValueYear;
+            public Byte presentValueMonth;
+            public Byte presentValueDay;
+            public Byte presentValueWeekday;
+
+            public void Set(Byte year, Byte month, Byte day, Byte weekday)
+            {
+                this.presentValueYear = year;
+                this.presentValueMonth = month;
+                this.presentValueDay = day;
+                this.presentValueWeekday = weekday;
+            }
+        }
+
+        public class ExampleDatabaseTimeValue : ExampleDatabaseBase
+        {
+            public Byte presentValueHour;
+            public Byte presentValueMinute;
+            public Byte presentValueSecond;
+            public Byte presentValueHundrethSecond;
+
+            public void Set(Byte hour, Byte minute, Byte second, Byte hundrethSecond)
+            {
+                this.presentValueHour = hour; 
+                this.presentValueMinute = minute;
+                this.presentValueSecond = second;
+                this.presentValueHundrethSecond = hundrethSecond;
+            }
+        }
+
         public ExampleDatabaseDevice Device;
         public ExampleDatabaseAnalog[] AnalogInput;
         public ExampleDatabaseAnalogOutput[] AnalogOutput; 
@@ -77,6 +121,10 @@ namespace BACnetServerExample
         public ExampleDatabaseBinary[] BinaryValue;
         public ExampleDatabaseMultiState[] MultiStateInput;
         public ExampleDatabaseMultiState[] MultiStateValue;
+        public ExampleDatabaseCharacterString[] CharacterString;
+        public ExampleDatabasePositiveIntergerValue[] PositiveIntergerValue;
+        public ExampleDatabaseDateValue[] DateValue;
+        public ExampleDatabaseTimeValue[] TimeValue;
 
 
         // This function returns a unique name for each object. 
@@ -104,16 +152,20 @@ namespace BACnetServerExample
             this.AnalogValue = new ExampleDatabaseAnalogValue[COUNT_ANALOG_VALUE];
             this.BinaryInput = new ExampleDatabaseBinary[COUNT_BINARY_INPUT];
             this.BinaryValue = new ExampleDatabaseBinary[COUNT_BINARY_VALUE];
-            this.MultiStateInput = new ExampleDatabaseMultiState[COUNT_MULTI_STATE_INPUT] ;
+            this.MultiStateInput = new ExampleDatabaseMultiState[COUNT_MULTI_STATE_INPUT];
             this.MultiStateValue = new ExampleDatabaseMultiState[COUNT_MULTI_STATE_VALUE];
-            
+            this.CharacterString = new ExampleDatabaseCharacterString[COUNT_CHARACTER_STRING_VALUE];
+            this.PositiveIntergerValue = new ExampleDatabasePositiveIntergerValue[COUNT_POSITIVE_INTEGER_VALUE];
+            this.DateValue = new ExampleDatabaseDateValue[COUNT_DATE_VALUE];
+            this.TimeValue = new ExampleDatabaseTimeValue[COUNT_TIME_VALUE];
+
             // Default Values 
             this.Device.name = "Device name Rainbow";
-            this.Device.instance = 389001; 
+            this.Device.instance = 389001;
             this.Device.description = "This is the example description";
             this.Device.vendorIdentifiier = 389; // 389 is Chipkin's vendorIdentifiier
             this.Device.vendorName = "Chipkin Automation Systems";
-            this.Device.modelName = "Windows-BACnetServerExampleCSharp";            
+            this.Device.modelName = "Windows-BACnetServerExampleCSharp";
 
             for (UInt32 offset = 0; offset < this.AnalogInput.Length; offset++)
             {
@@ -130,10 +182,10 @@ namespace BACnetServerExample
                 this.AnalogOutput[offset].name = "AnalogOutput " + this.GetColorName();
                 this.AnalogOutput[offset].units = CASBACnetStackAdapter.ENGINEERING_UNITS_NO_UNITS;
                 this.AnalogOutput[offset].outOfService = false;
-                this.AnalogOutput[offset].relinquishDefault =  (float)offset * 1.1f;
-                for (int index = 0 ; index < this.AnalogOutput[offset].priorityArrayNulls.Length; index++)
+                this.AnalogOutput[offset].relinquishDefault = (float)offset * 1.1f;
+                for (int index = 0; index < this.AnalogOutput[offset].priorityArrayNulls.Length; index++)
                 {
-                    this.AnalogOutput[offset].priorityArrayNulls[index] = true; 
+                    this.AnalogOutput[offset].priorityArrayNulls[index] = true;
                 }
             }
             for (UInt32 offset = 0; offset < this.AnalogValue.Length; offset++)
@@ -169,6 +221,31 @@ namespace BACnetServerExample
                 this.MultiStateValue[offset].name = "MultiStateValue " + this.GetColorName();
                 this.MultiStateValue[offset].stateText = ExampleDatabaseMultiState._windCompassText;
                 this.MultiStateValue[offset].presentValue = Convert.ToUInt32(offset % this.MultiStateValue[offset].stateText.Length);
+            }
+            for (UInt32 offset = 0; offset < this.CharacterString.Length; offset++)
+            {
+                this.CharacterString[offset] = new ExampleDatabaseCharacterString();
+                this.CharacterString[offset].name = "CharacterString " + this.GetColorName();
+                this.CharacterString[offset].presentValue = "Value of the CharacterString object"; 
+            }
+            for (UInt32 offset = 0; offset < this.PositiveIntergerValue.Length; offset++)
+            {
+                this.PositiveIntergerValue[offset] = new ExampleDatabasePositiveIntergerValue();
+                this.PositiveIntergerValue[offset].name = "PositiveIntergerValue " + this.GetColorName();
+                this.PositiveIntergerValue[offset].presentValue = offset * 1000 ;
+            }
+            for (UInt32 offset = 0; offset < this.DateValue.Length; offset++)
+            {
+                this.DateValue[offset] = new ExampleDatabaseDateValue();
+                this.DateValue[offset].name = "DateValue " + this.GetColorName();
+                this.DateValue[offset].Set(2019-1900, 6, 7, 5); 
+            }
+
+            for (UInt32 offset = 0; offset < this.TimeValue.Length; offset++)
+            {
+                this.TimeValue[offset] = new ExampleDatabaseTimeValue();
+                this.TimeValue[offset].name = "TimeValue " + this.GetColorName();
+                this.TimeValue[offset].Set(15, 13, 55, 0);
             }
         }
 

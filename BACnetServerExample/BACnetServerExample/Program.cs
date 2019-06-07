@@ -139,6 +139,29 @@ namespace BACnetServerExample
                 }
                 CASBACnetStackAdapter.SetPropertyByObjectTypeEnabled(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_MULTI_STATE_VALUE, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_STATETEXT, true);
 
+                // CharacterString
+                for (UInt32 offset = 0; offset < this.database.CharacterString.Length; offset++)
+                {
+                    CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_CHARACTERSTRING_VALUE, offset);
+                }
+
+                // PositiveIntergerValue
+                for (UInt32 offset = 0; offset < this.database.PositiveIntergerValue.Length; offset++)
+                {
+                    CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_POSITIVE_INTEGER_VALUE, offset);
+                }
+
+                // DateValue
+                for (UInt32 offset = 0; offset < this.database.DateValue.Length; offset++)
+                {
+                    CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_DATE_VALUE, offset);
+                }
+
+                // TimeValue
+                for (UInt32 offset = 0; offset < this.database.TimeValue.Length; offset++)
+                {
+                    CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE, offset);
+                }
 
 
 
@@ -399,7 +422,52 @@ namespace BACnetServerExample
                             }
                         }
                         break;
-
+                    case CASBACnetStackAdapter.OBJECT_TYPE_CHARACTERSTRING_VALUE:
+                        if (objectInstance < database.CharacterString.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
+                            {
+                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].name);
+                                return true;
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
+                            {
+                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].presentValue);
+                                return true;
+                            }
+                        }
+                        break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_POSITIVE_INTEGER_VALUE:
+                        if (objectInstance < database.CharacterString.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
+                            {
+                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.PositiveIntergerValue[objectInstance].name);
+                                return true;
+                            }
+                        }
+                        break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_DATE_VALUE:
+                        if (objectInstance < database.DateValue.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
+                            {
+                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.DateValue[objectInstance].name);
+                                return true;
+                            }
+                        }
+                        break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE:
+                        if (objectInstance < database.DateValue.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
+                            {
+                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.TimeValue[objectInstance].name);
+                                return true;
+                            }
+                        }
+                        break;
+                        
                     default:
                         break;
                 }
@@ -566,6 +634,16 @@ namespace BACnetServerExample
                             }
                         }
                         break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_POSITIVE_INTEGER_VALUE:
+                        if (objectInstance < database.PositiveIntergerValue.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
+                            {
+                                *value = database.PositiveIntergerValue[objectInstance].presentValue;
+                                return true;
+                            }
+                        }
+                        break; 
                     default:
                         break;
                 }
@@ -629,6 +707,29 @@ namespace BACnetServerExample
             bool CallbackGetPropertyDate(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* year, Byte* month, Byte* day, Byte* weekday, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyDate. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
+
+                switch( objectType)
+                {
+                    case CASBACnetStackAdapter.OBJECT_TYPE_DATE_VALUE:
+                        if (objectInstance < database.DateValue.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
+                            {
+                                *year = database.DateValue[objectInstance].presentValueYear;
+                                *month = database.DateValue[objectInstance].presentValueMonth;
+                                *day = database.DateValue[objectInstance].presentValueDay;
+                                *weekday = database.DateValue[objectInstance].presentValueWeekday;
+                                Console.WriteLine("FYI: DateValue[{0}] got year=[{1}] month=[{2}] day=[{3}] weekday=[{4}]", objectInstance, database.DateValue[objectInstance].presentValueYear,
+                                    database.DateValue[objectInstance].presentValueMonth, database.DateValue[objectInstance].presentValueDay, database.DateValue[objectInstance].presentValueWeekday);
+                                return true;
+                            }
+                        }
+                        break;
+                    default:
+                        break; 
+                }
+
+
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
@@ -647,6 +748,29 @@ namespace BACnetServerExample
             bool CallbackGetPropertyTime(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* hour, Byte* minute, Byte* second, Byte* hundrethSeconds, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyTime. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
+
+                switch( objectType)
+                {
+                    case CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE:
+                        if (objectInstance < database.TimeValue.Length)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
+                            {
+                                *hour = database.TimeValue[objectInstance].presentValueHour;
+                                *minute = database.TimeValue[objectInstance].presentValueMinute;
+                                *second = database.TimeValue[objectInstance].presentValueSecond;
+                                *hundrethSeconds = database.TimeValue[objectInstance].presentValueHundrethSecond;
+                                Console.WriteLine("FYI: TimeValue[{0}] got hour=[{1}] minute=[{2}] second=[{3}] hundrethSeconds=[{4}]", objectInstance, 
+                                    database.TimeValue[objectInstance].presentValueHour, database.TimeValue[objectInstance].presentValueMinute, 
+                                    database.TimeValue[objectInstance].presentValueSecond, database.TimeValue[objectInstance].presentValueHundrethSecond);
+                                return true;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
