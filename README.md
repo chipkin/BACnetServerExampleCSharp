@@ -1,4 +1,5 @@
 # Windows BACnet Server Example CSharp
+
 A basic BACnet IP server example written in CSharp using the [CAS BACnet Stack](https://www.bacnetstack.com/).
 
 - device: 389001  (Device name Rainbow)
@@ -24,7 +25,7 @@ A basic BACnet IP server example written in CSharp using the [CAS BACnet Stack](
   - multi_state_value: 1  (MultiStateValue Umber)
   - multi_state_value: 2  (MultiStateValue Vermilion)
 
-Building
+## Building
 
 A [Visual studio 2019](https://visualstudio.microsoft.com/downloads/) project is included with this project.
 
