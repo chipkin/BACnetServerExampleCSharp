@@ -1,4 +1,17 @@
-﻿using BACnetStackDLLServerCSharpExample;
+﻿/**
+ * Windows BACnet Server Example CSharp
+ * ----------------------------------------------------------------------------
+ * In this CAS BACnet Stack example, we create a BACnet IP server with the basic object types. 
+ *
+ * More information https://github.com/chipkin/Windows-BACnetServerExampleCSharp
+ * 
+ * Created by: Steven Smethurst 
+ * Created on: June 7, 2019 
+ * Last updated: June 7, 2019 
+ */
+
+
+using BACnetStackDLLServerCSharpExample;
 using System;
 using System.Net;
 using System.Net.Sockets;
