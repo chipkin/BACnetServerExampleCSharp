@@ -1,4 +1,4 @@
-# Windows BACnet Server Example CSharp
+# BACnet Server Example CSharp
 
 A basic BACnet IP server example written in CSharp using the [CAS BACnet Stack](https://www.bacnetstack.com/).
 
