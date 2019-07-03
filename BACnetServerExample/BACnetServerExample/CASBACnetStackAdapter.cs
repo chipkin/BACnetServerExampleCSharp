@@ -1210,9 +1210,6 @@ namespace BACnetStackDLLServerCSharpExample
         [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_AddNetworkPortObject", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int AddNetworkPortObject();
 
-        [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_SetPropertySubscribable", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int SetPropertySubscribable();
-
         [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_SetObjectTypeCreatable", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int SetObjectTypeCreatable();
 
@@ -1238,6 +1235,13 @@ namespace BACnetStackDLLServerCSharpExample
         [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_RegisterCallbackDeleteObject", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int RegisterCallbackDeleteObject();
         */
+
+        [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_SetPropertyByObjectTypeSubscribable", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SetPropertySubscribable(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool subscribable);
+
+        [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_SetPropertyByObjectTypeSubscribable", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SetPropertyByObjectTypeSubscribable(UInt32 deviceInstance, UInt16 objectType, UInt32 propertyIdentifier, bool subscribable);
+
 
         [DllImport(BACNET_API_DLL_FILENAME, EntryPoint = "BACnetStack_SendReadPropertyAsync", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern bool BACnetStack_SendReadPropertyAsync(Byte* sentInvokeId, Byte* connectionString, Byte connectionStringLength, Byte networkType, UInt16 network, Byte* destinationAddress, Byte destinationAddressLength, Byte propertyArraysCount, Byte* propertyArrays);
