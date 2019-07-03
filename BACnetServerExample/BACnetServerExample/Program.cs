@@ -61,7 +61,7 @@ namespace BACnetServerExample
                 // Get Datatype Callbacks 
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyCharacterString(CallbackGetPropertyCharString);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyReal(CallbackGetPropertyReal);
-                CASBACnetStackAdapter.RegisterCallbackGetPropertyEnumerated(CallbackGetEnumerated);
+                CASBACnetStackAdapter.RegisterCallbackGetPropertyEnumerated(CallbackGetEnumerated);                
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyUnsignedInteger(CallbackGetUnsignedInteger);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyBool(CallbackGetPropertyBool);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyDate(CallbackGetPropertyDate);
@@ -98,6 +98,8 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, offset);
                 }
                 CASBACnetStackAdapter.SetPropertyByObjectTypeEnabled(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_DESCRIPTION, true);
+                CASBACnetStackAdapter.SetPropertyByObjectTypeSubscribable(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE, true);
+
 
                 // AnalogOutput
                 for (UInt32 offset = 0; offset < this.database.AnalogOutput.Length; offset++)
@@ -163,13 +165,13 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE, offset);
                 }
 
-
-
                 // Enable optional services 
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_READ_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_SUBSCRIBE_COV, true);
+
+
 
                 // All done with the BACnet setup. 
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
@@ -183,8 +185,9 @@ namespace BACnetServerExample
                 for (; ; )
                 {
                     CASBACnetStackAdapter.Loop();
-                    database.Loop();
-                    DoUserInput();
+
+                    database.Loop(); // Just for this example 
+                    DoUserInput(); // Just for this example 
                 }
             }
 
@@ -207,6 +210,10 @@ namespace BACnetServerExample
                             {
                                 this.database.AnalogInput[0].presentValue += 0.01f;
                                 Console.WriteLine("FYI: Incurment Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
+
+                                // Notify the CAS BACnet stack that this value has been updated. 
+                                // If there are any subscribers to this value, they will be sent be sent the updated value. 
+                                CASBACnetStackAdapter.ValueUpdated(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE);
                             }
                             break;
                         case ConsoleKey.DownArrow:
@@ -214,6 +221,7 @@ namespace BACnetServerExample
                             {
                                 this.database.AnalogInput[0].presentValue -= 0.01f;
                                 Console.WriteLine("FYI: Decrement Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
+                                CASBACnetStackAdapter.ValueUpdated(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE);
                             }
                             break;
                         default:
