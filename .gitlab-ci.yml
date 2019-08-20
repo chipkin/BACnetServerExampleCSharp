@@ -21,7 +21,7 @@ Build:
     - cd BACnetServerExample
     - "echo namespace CASBACnetStack{static class CIBuildVersion { public const int CIBUILDNUMBER = %CI_PIPELINE_IID%;}} > CIBuildVersion.cs"
     - type CIBuildVersion.cs
-    - cd ..\
+    - cd ..
   script:
     # Create the bin directory if it does not exist
     - cd BACnetServerExample
