@@ -1,6 +1,6 @@
 variables:
   GIT_SUBMODULE_STRATEGY: normal
-  GIT_STRATEGY: fetch
+  GIT_STRATEGY: clone
   GIT_DEPTH: 1
 
 cache:
