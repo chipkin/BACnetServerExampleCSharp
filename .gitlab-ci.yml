@@ -1,5 +1,8 @@
 variables:
   GIT_SUBMODULE_STRATEGY: normal
+  GIT_STRATEGY: fetch
+  GIT_DEPTH: 1
+
 cache:
   key: ${CI_JOB_NAME}
   
