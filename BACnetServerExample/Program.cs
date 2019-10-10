@@ -298,19 +298,7 @@ namespace BACnetServerExample
                 return 0;
             }
 
-            private UInt32 UpdateStringAndReturnSize(System.Char* value, UInt32 maxElementCount, string stringAsVallue)
-            {
-                byte[] nameAsBuffer = ASCIIEncoding.ASCII.GetBytes(stringAsVallue);
-                UInt32 valueElementCount = maxElementCount;
-                if (nameAsBuffer.Length < valueElementCount)
-                {
-                    valueElementCount = Convert.ToUInt32(nameAsBuffer.Length);
-                }
-                Marshal.Copy(nameAsBuffer, 0, (IntPtr)value, Convert.ToInt32(valueElementCount));
-                return valueElementCount;
-            }
-
-            public bool CallbackGetPropertyCharString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Char* value, UInt32* valueElementCount, UInt32 maxElementCount, System.Byte encodingType, bool useArrayIndex, UInt32 propertyArrayIndex)
+            public bool CallbackGetPropertyCharString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Byte* value, UInt32* valueElementCount, UInt32 maxElementCount, System.Byte encodingType, bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyCharString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
 
@@ -321,23 +309,23 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.Device.name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.Device.name);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_MODEL_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.Device.modelName);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.Device.modelName);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_VENDOR_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.Device.vendorName);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.Device.vendorName);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_APPLICATIONSOFTWAREVERSION)
                             {
                                 string version = APPLICATION_VERSION + "." + CIBuildVersion.CIBUILDNUMBER; 
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, version);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, version);
                                 return true;
                             }
                         }
@@ -347,12 +335,12 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.AnalogInput[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogInput[objectInstance].name);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_DESCRIPTION)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.AnalogInput[objectInstance].description);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogInput[objectInstance].description);
                                 return true;
                             }
                         }
@@ -362,7 +350,7 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.AnalogOutput[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogOutput[objectInstance].name);
                                 return true;
                             }                            
                         }
@@ -371,7 +359,7 @@ namespace BACnetServerExample
                         if (objectInstance < database.AnalogValue.Length) {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.AnalogValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogValue[objectInstance].name);
                                 return true;
                             }                           
                         }
@@ -380,7 +368,7 @@ namespace BACnetServerExample
                         if (objectInstance < database.BinaryInput.Length) {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.BinaryInput[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.BinaryInput[objectInstance].name);
                                 return true;
                             }
                         }
@@ -389,7 +377,7 @@ namespace BACnetServerExample
                         if (objectInstance < database.BinaryValue.Length) {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.BinaryValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.BinaryValue[objectInstance].name);
                                 return true;
                             }
                         }
@@ -399,14 +387,14 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateInput[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateInput[objectInstance].name);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_STATETEXT && useArrayIndex)
                             {
                                 if (propertyArrayIndex <= database.MultiStateInput[objectInstance].stateText.Length)
                                 {
-                                    *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateInput[objectInstance].stateText[propertyArrayIndex - 1]);
+                                    *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateInput[objectInstance].stateText[propertyArrayIndex - 1]);
                                     return true;
                                 }
                             }
@@ -417,14 +405,14 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateValue[objectInstance].name);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_STATETEXT && useArrayIndex)
                             {
                                 if (propertyArrayIndex <= database.MultiStateValue[objectInstance].stateText.Length)
                                 {
-                                    *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateValue[objectInstance].stateText[propertyArrayIndex - 1]);
+                                    *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.MultiStateValue[objectInstance].stateText[propertyArrayIndex - 1]);
                                     return true;
                                 }
                             }
@@ -435,12 +423,12 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].name);
                                 return true;
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].presentValue);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.CharacterString[objectInstance].presentValue);
                                 return true;
                             }
                         }
@@ -450,7 +438,7 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.PositiveIntergerValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.PositiveIntergerValue[objectInstance].name);
                                 return true;
                             }
                         }
@@ -460,7 +448,7 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.DateValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.DateValue[objectInstance].name);
                                 return true;
                             }
                         }
@@ -470,7 +458,7 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
-                                *valueElementCount = UpdateStringAndReturnSize(value, maxElementCount, database.TimeValue[objectInstance].name);
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.TimeValue[objectInstance].name);
                                 return true;
                             }
                         }
@@ -937,7 +925,7 @@ namespace BACnetServerExample
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
-            bool CallbackSetPropertyCharacterString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, char* value, UInt32 length, Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
+            bool CallbackSetPropertyCharacterString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Byte* value, UInt32 length, Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyCharacterString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
