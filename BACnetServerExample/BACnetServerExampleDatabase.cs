@@ -1,4 +1,16 @@
-﻿using BACnetServerExample;
+﻿/*
+ * BACnet Server Example C#
+ * ----------------------------------------------------------------------------
+ * BACnetServerExampleDatabase.cs
+ * 
+ * Sets up object names and properties in the database.
+ * 
+ * Created by: Steven Smethurst
+ * Created on: June 7, 2019 
+ * Last updated: June 17, 2020
+*/
+
+using BACnetServerExample;
 using CASBACnetStack;
 using System;
 using System.Collections.Generic;
@@ -166,8 +178,9 @@ namespace BACnetServerExample
             this.Device.description = "This is the example description";
             this.Device.vendorIdentifiier = 389; // 389 is Chipkin's vendorIdentifiier
             this.Device.vendorName = "Chipkin Automation Systems";
-            this.Device.modelName = "Windows-BACnetServerExampleCSharp";
+            this.Device.modelName = "BACnetServerExampleCSharp";
 
+            // Setup objects with default values
             for (UInt32 offset = 0; offset < this.AnalogInput.Length; offset++)
             {
                 this.AnalogInput[offset] = new ExampleDatabaseAnalog();

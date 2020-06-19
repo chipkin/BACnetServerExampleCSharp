@@ -1,14 +1,19 @@
-﻿/**
- * Windows BACnet Server Example CSharp
+﻿/*
+ * BACnet Server Example C#
  * ----------------------------------------------------------------------------
- * In this CAS BACnet Stack example, we create a BACnet IP server with the basic object types. 
- *
- * More information https://github.com/chipkin/Windows-BACnetServerExampleCSharp
+ * Program.cs
  * 
- * Created by: Steven Smethurst 
+ * In this CAS BACnet Stack example, we create a BACnet IP server with various
+ * objects and properties from an example database.
+ *
+ * More information https://github.com/chipkin/BACnetServerExampleCSharp
+ * 
+ * This file contains the 'Main' function. Program execution begins and ends there.
+ * 
+ * Created by: Steven Smethurst
  * Created on: June 7, 2019 
- * Last updated: June 7, 2019 
- */
+ * Last updated: June 19, 2020
+*/
 
 
 using System;
@@ -22,38 +27,45 @@ namespace BACnetServerExample
 {
     class Program
     {
+
+        // Main function
         static void Main(string[] args)
         {
             BACnetServer bacnetServer = new BACnetServer();
             bacnetServer.Run();
         }
 
+        // BACnet Server Object
         unsafe class BACnetServer
         {
             // UDP 
             UdpClient udpServer;
             IPEndPoint RemoteIpEndPoint;
 
-            // Settings 
+            // Set up the BACnet port 
             const UInt16 SETTING_BACNET_PORT = 47808;
 
-            // A Database to hold the current state of the 
+            // A Database to hold the current state of the server
             private ExampleDatabase database = new ExampleDatabase();
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.1";
+            const string APPLICATION_VERSION = "0.0.2";
 
+            // Server setup and main loop
             public void Run()
             {
-                Console.WriteLine("Starting Windows-BACnetServerExampleCSharp version: {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
-                Console.WriteLine("https://github.com/chipkin/Windows-BACnetServerExampleCSharp");
+                Console.WriteLine("Starting BACnetServerExampleCSharp version: {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
+                Console.WriteLine("https://github.com/chipkin/BACnetServerExampleCSharp");
                 Console.WriteLine("FYI: BACnet Stack version: {0}.{1}.{2}.{3}",
                     CASBACnetStackAdapter.GetAPIMajorVersion(),
                     CASBACnetStackAdapter.GetAPIMinorVersion(),
                     CASBACnetStackAdapter.GetAPIPatchVersion(),
                     CASBACnetStackAdapter.GetAPIBuildVersion());
 
-                // Send/Recv callbacks. 
+                // 1. Setup the callbacks
+	            // ---------------------------------------------------------------------------
+
+                // Send/Receive callbacks
                 CASBACnetStackAdapter.RegisterCallbackSendMessage(SendMessage);
                 CASBACnetStackAdapter.RegisterCallbackReceiveMessage(RecvMessage);
                 CASBACnetStackAdapter.RegisterCallbackGetSystemTime(CallbackGetSystemTime);
@@ -86,11 +98,17 @@ namespace BACnetServerExample
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyOctetString(CallbackSetPropertyOctetString);
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyBitString(CallbackSetPropertyBitString);
 
+                // 2. Setup the BACnet device
+	            // ---------------------------------------------------------------------------
 
+                // Initialize database
                 this.database.Setup();
 
-                // Add the device. 
+                // Add the device
                 CASBACnetStackAdapter.AddDevice(this.database.Device.instance);
+
+                // 3. Add Objects
+	            // ---------------------------------------------------------------------------
 
                 // AnalogInput
                 for (UInt32 offset = 0; offset < this.database.AnalogInput.Length; offset++)
@@ -99,7 +117,6 @@ namespace BACnetServerExample
                 }
                 CASBACnetStackAdapter.SetPropertyByObjectTypeEnabled(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_DESCRIPTION, true);
                 CASBACnetStackAdapter.SetPropertyByObjectTypeSubscribable(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE, true);
-
 
                 // AnalogOutput
                 for (UInt32 offset = 0; offset < this.database.AnalogOutput.Length; offset++)
@@ -126,6 +143,7 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_BINARY_VALUE, offset);
                     CASBACnetStackAdapter.SetPropertyWritable(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_BINARY_VALUE, offset, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE, true);
                 }
+
                 // MultiStateInput
                 for (UInt32 offset = 0; offset < this.database.MultiStateInput.Length; offset++)
                 {
@@ -165,77 +183,114 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE, offset);
                 }
 
+                // 4. Enable Services
+	            // ---------------------------------------------------------------------------
                 // Enable optional services 
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_READ_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_SUBSCRIBE_COV, true);
 
+                // All done with the BACnet setup
+                Console.WriteLine("FYI: CAS BACnet Stack Setup, successfully");
 
-
-                // All done with the BACnet setup. 
-                Console.WriteLine("FYI: CAS BACnet Stack Setup, successfuly");
-
-                // Open the BACnet port to recive messages. 
+                // 5. Open the BACnet port to receive messages
+	            // ---------------------------------------------------------------------------
                 this.udpServer = new UdpClient(SETTING_BACNET_PORT);
                 this.RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-                // Main loop.
+                // 6. Start the main loop
+	            // ---------------------------------------------------------------------------
                 Console.WriteLine("FYI: Starting main loop");
                 for (; ; )
                 {
                     CASBACnetStackAdapter.Loop();
 
-                    database.Loop(); // Just for this example 
-                    DoUserInput(); // Just for this example 
+                    // Update values in the example database
+                    database.Loop(); 
+
+                    // Handle any user input
+                    // Note: User input in this example is used for the following:
+                    //      H  - Display the help menu
+                    //      Up Arrow - Increment the Analog Input 0 property
+                    //      Down Arrow - Decrement the Analog Input 0 property
+                    //      Q - Quit the program
+                    if (!DoUserInput())
+                    {
+                        // Exit program if Q is hit
+                        break;
+                    }
                 }
             }
 
-            private void DoUserInput()
+            // Handle user input. Return false if quitting program.
+            private bool DoUserInput()
             {
                 if (Console.KeyAvailable)
                 {
                     ConsoleKeyInfo key = Console.ReadKey(true);
                     switch (key.Key)
                     {
-                        case ConsoleKey.F1:
-                            Console.WriteLine("FYI: BACnet Stack version: {0}.{1}.{2}.{3}",
+
+                        // Display help menu and version information
+                        case ConsoleKey.H:
+                            Console.WriteLine("\nBACnetServerExampleCSharp version: {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
+                            Console.WriteLine("BACnet Stack version: {0}.{1}.{2}.{3}",
                                 CASBACnetStackAdapter.GetAPIMajorVersion(),
                                 CASBACnetStackAdapter.GetAPIMinorVersion(),
                                 CASBACnetStackAdapter.GetAPIPatchVersion(),
                                 CASBACnetStackAdapter.GetAPIBuildVersion());
+
+                            Console.WriteLine("https://github.com/chipkin/BACnetServerExampleCSharp");
+                            Console.WriteLine("H  - Display the help menu");
+                            Console.WriteLine("Up Arrow - Increment the Analog Input 0 property");
+                            Console.WriteLine("Down Arrow - Decrement the Analog Input 0 property");
+                            Console.WriteLine("Q - Quit the program");
                             break;
+
+                        // Increment the analog input
                         case ConsoleKey.UpArrow:
                             if (this.database.AnalogInput.Length > 0)
                             {
                                 this.database.AnalogInput[0].presentValue += 0.01f;
-                                Console.WriteLine("FYI: Incurment Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
+                                Console.WriteLine("\nFYI: Incurment Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
 
                                 // Notify the CAS BACnet stack that this value has been updated. 
                                 // If there are any subscribers to this value, they will be sent be sent the updated value. 
                                 CASBACnetStackAdapter.ValueUpdated(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE);
                             }
                             break;
+
+                        // Decrement the analog input 
                         case ConsoleKey.DownArrow:
                             if (this.database.AnalogInput.Length > 0)
                             {
                                 this.database.AnalogInput[0].presentValue -= 0.01f;
-                                Console.WriteLine("FYI: Decrement Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
+                                Console.WriteLine("\nFYI: Decrement Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
                                 CASBACnetStackAdapter.ValueUpdated(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE);
                             }
                             break;
+
+                        // Quit the program
+                        case ConsoleKey.Q:
+                            Console.WriteLine("\nQuitting...", 0, this.database.AnalogInput[0].presentValue);
+                            return false;
+
                         default:
                             break;
                     }
                 }
+                return true;
             }
 
-
+            // Callback used by the BACnet Stack to get the current time
             public ulong CallbackGetSystemTime()
             {
                 // https://stackoverflow.com/questions/9453101/how-do-i-get-epoch-time-in-c
                 return (ulong)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
             }
+
+            // Callback used by the BACnet Stack to send a BACnet message
             public UInt16 SendMessage(System.Byte* message, UInt16 messageLength, System.Byte* connectionString, System.Byte connectionStringLength, System.Byte networkType, Boolean broadcast)
             {
                 if (connectionStringLength < 6 || messageLength <= 0)
@@ -265,6 +320,8 @@ namespace BACnetServerExample
 
                 return 0;
             }
+
+            // Callback used by the BACnet Stack to check if there is a message to process
             public UInt16 RecvMessage(System.Byte* message, UInt16 maxMessageLength, System.Byte* receivedConnectionString, System.Byte maxConnectionStringLength, System.Byte* receivedConnectionStringLength, System.Byte* networkType)
             {
                 try
@@ -298,6 +355,7 @@ namespace BACnetServerExample
                 return 0;
             }
 
+            // Callback used by the BACnet Stack to set Charstring property values to the user
             public bool CallbackGetPropertyCharString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Byte* value, UInt32* valueElementCount, UInt32 maxElementCount, System.Byte encodingType, bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyCharString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -472,6 +530,7 @@ namespace BACnetServerExample
                 return false; // Could not handle this request. 
             }
 
+            // Callback used by the BACnet Stack to get Real property values from the user
             public bool CallbackGetPropertyReal(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, float* value, bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyReal. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -519,6 +578,8 @@ namespace BACnetServerExample
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to get Enumerated property values from the user
             public bool CallbackGetEnumerated(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, UInt32* value, bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetEnumerated. objectType={0}, objectInstance={1}, propertyIdentifier={2}", objectType, objectInstance, propertyIdentifier);
@@ -574,6 +635,7 @@ namespace BACnetServerExample
                 return false;
             }
 
+            // Callback used by the BACnet Stack to get Unsigned Integer property values from the user
             public bool CallbackGetUnsignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, UInt32* value, bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetUnsignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -647,6 +709,7 @@ namespace BACnetServerExample
                 return false;
             }
 
+            // Callback used by the BACnet Stack to get Boolean property values from the user
             public bool CallbackGetPropertyBool(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool* value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyBool. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -699,7 +762,7 @@ namespace BACnetServerExample
                 return false;
             }
 
-
+            // Callback used by the BACnet Stack to get Date property values from the user
             bool CallbackGetPropertyDate(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* year, Byte* month, Byte* day, Byte* weekday, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyDate. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -729,12 +792,16 @@ namespace BACnetServerExample
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to get Dboule property values from the user
             bool CallbackGetPropertyDouble(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Double* value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyDouble. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to get Integer property values from the user
             bool CallbackGetPropertySignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Int32* value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertySignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -770,6 +837,8 @@ namespace BACnetServerExample
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to set OctetString property values to the user
             bool CallbackGetPropertyOctetString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* value, UInt32* valueElementCount, UInt32 maxElementCount, System.Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyOctetString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -777,7 +846,7 @@ namespace BACnetServerExample
                 return false;
             }
 
-
+            // Callback used by the BACnet Stack to set Enumerated property values to the user
             public bool CallbackSetPropertyEnumerated(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, UInt32 value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyEnumerated. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3} value={4}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex, value);
@@ -802,6 +871,7 @@ namespace BACnetServerExample
                 return false;
             }
 
+            // Callback used by the BACnet Stack to set Real property values to the user
             public bool CallbackSetPropertyReal(bool deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, float value, bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyReal. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3} value={4}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex, value);
@@ -842,6 +912,7 @@ namespace BACnetServerExample
                 return false;
             }
 
+            // Callback used by the BACnet Stack to get Unsigned Integer property values from the user
             bool CallbackSetPropertyUnsignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, UInt32 value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyUnsignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3} value={4}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex, value);
@@ -867,6 +938,11 @@ namespace BACnetServerExample
                 return false; 
             }
 
+            // Callback used by the BACnet Stack to set NULL property values to the user
+            // 
+            // This is commonly used when a BACnet client 'reliqunishes' a value in a object that has a priority array. The client sends a 
+            // WriteProperty message with a value of "NULL" to the present value with a priority. When the CAS BACnet Stack receives this 
+            // message, it will call the CallbackSetPropertyNull callback function with the write priorty.
             bool CallbackSetPropertyNull(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyNull. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
@@ -895,48 +971,63 @@ namespace BACnetServerExample
                 return false; 
             }
 
+            // Callback used by the BACnet Stack to set Integer property values to the user
             bool CallbackSetPropertySignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Int32 value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertySignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to set Double property values to the user
             bool CallbackSetPropertyDouble(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Double value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyDouble. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
+
+            // Callback used by the BACnet Stack to set Boolean property values to the user
             bool CallbackSetPropertyBool(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyBool. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
             return false; 
             }
+
+            // Callback used by the BACnet Stack to set Time property values to the user
             bool CallbackSetPropertyTime(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte hour, Byte minute, Byte second, Byte hundrethSeconds, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyTime. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
+
+            // Callback used by the BACnet Stack to set Date property values to the user
             bool CallbackSetPropertyDate(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte year, Byte month, Byte day, Byte weekday, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyDate. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
+
+            // Callback used by the BACnet Stack to set Charstring property values to the user
             bool CallbackSetPropertyCharacterString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Byte* value, UInt32 length, Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyCharacterString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to set OctetString property values to the user
             bool CallbackSetPropertyOctetString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* value, UInt32 length, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyOctetString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
+
+            // Callback used by the BACnet Stack to set Bitstring property values to the user
             bool CallbackSetPropertyBitString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool* value, UInt32 length, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyBitString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
