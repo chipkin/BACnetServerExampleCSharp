@@ -12,7 +12,7 @@
  * 
  * Created by: Steven Smethurst
  * Created on: June 7, 2019 
- * Last updated: June 17, 2020
+ * Last updated: June 19, 2020
 */
 
 
@@ -49,7 +49,7 @@ namespace BACnetServerExample
             private ExampleDatabase database = new ExampleDatabase();
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.1";
+            const string APPLICATION_VERSION = "0.0.2";
 
             // Server setup and main loop
             public void Run()
