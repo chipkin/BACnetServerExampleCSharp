@@ -4,11 +4,16 @@ A basic BACnet IP server example written in C# using the [CAS BACnet Stack](http
 
 ## Releases
 
-Build versions of this example can be downloaded from the [Releases](https://github.com/chipkin/BACnetServerExampleCSharp/releases) page.
+Build versions of this example can be downloaded from the [Releases](https://github.com/chipkin/BACnetServerExampleCSharp/releases) page. 
 
 ## Installation
 
 Download the latest release zip file on the [Releases](https://github.com/chipkin/BACnetServerExampleCSharp/releases) page.
+Copy CASBACnetStack_x64_Release.dll from the CAS BACnet Stack into the release folder. Please contact Chipkin Automation Systems for access to the CAS BACnet Stack. Launch server by using the following command:
+```
+dotnet BACnetServerExample.dll
+```
+Requires [.NET Core 3.0+](https://dotnet.microsoft.com/download)
 
 ## Usage
 
