@@ -42,6 +42,7 @@ namespace BACnetServerExample
             public UInt32 instance;
             public String modelName;
             public UInt32 vendorIdentifiier;
+            public UInt32 protocolRevision;
             public String vendorName;
         }
         public class ExampleDatabaseAnalog : ExampleDatabaseBase
@@ -177,6 +178,7 @@ namespace BACnetServerExample
             this.Device.instance = 389001;
             this.Device.description = "This is the example description";
             this.Device.vendorIdentifiier = 389; // 389 is Chipkin's vendorIdentifiier
+            this.Device.protocolRevision = 16; // Overide the protocolRevision 
             this.Device.vendorName = "Chipkin Automation Systems";
             this.Device.modelName = "BACnetServerExampleCSharp";
 

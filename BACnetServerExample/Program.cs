@@ -49,7 +49,7 @@ namespace BACnetServerExample
             private ExampleDatabase database = new ExampleDatabase();
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.2";
+            const string APPLICATION_VERSION = "0.0.3";
 
             // Server setup and main loop
             public void Run()
@@ -592,7 +592,7 @@ namespace BACnetServerExample
                                 *value = (UInt32)(database.BinaryInput[objectInstance].presentValue ? 1 : 0);
                                 Console.WriteLine("FYI: BinaryInput[{0}].value got [{1}]", objectInstance, database.BinaryInput[objectInstance].presentValue);
                                 return true;
-                            }
+                            }                             
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_BINARY_VALUE:
@@ -647,6 +647,11 @@ namespace BACnetServerExample
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
                             {
                                 *value = database.Device.vendorIdentifiier;
+                                return true;
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PROTOCOLREVISION)
+                            {
+                                *value = database.Device.protocolRevision;
                                 return true;
                             }
                         }
@@ -724,7 +729,7 @@ namespace BACnetServerExample
                                 *value = database.AnalogInput[objectInstance].outOfService;
                                 Console.WriteLine("FYI: AnalogInput[{0}].outOfService got [{1}]", objectInstance, database.AnalogInput[objectInstance].outOfService);
                                 return true;
-                            }
+                            }                            
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_OUTPUT:
