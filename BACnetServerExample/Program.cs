@@ -644,12 +644,7 @@ namespace BACnetServerExample
                     case CASBACnetStackAdapter.OBJECT_TYPE_DEVICE:
                         if (deviceInstance == database.Device.instance && objectInstance == database.Device.instance)
                         {
-                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
-                            {
-                                *value = database.Device.vendorIdentifiier;
-                                return true;
-                            }
-                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PROTOCOLREVISION)
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PROTOCOLREVISION)
                             {
                                 *value = database.Device.protocolRevision;
                                 return true;
