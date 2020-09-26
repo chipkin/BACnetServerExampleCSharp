@@ -49,7 +49,7 @@ namespace BACnetServerExample
             private ExampleDatabase database = new ExampleDatabase();
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.3";
+            const string APPLICATION_VERSION = "0.0.4";
 
             // Server setup and main loop
             public void Run()
