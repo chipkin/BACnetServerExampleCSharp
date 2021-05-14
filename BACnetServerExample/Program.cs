@@ -183,8 +183,12 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_TIME_VALUE, offset);
                 }
 
+                // Network port object.
+                CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT, 0);
+
+
                 // 4. Enable Services
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
                 // Enable optional services 
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_READ_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY, true);
