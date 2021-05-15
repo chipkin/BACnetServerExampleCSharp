@@ -42,12 +42,9 @@ namespace BACnetServerExample
             UdpClient udpServer;
             IPEndPoint RemoteIpEndPoint;
 
-            // Set up the BACnet port 
-            const UInt16 SETTING_BACNET_PORT = 47808;
-
             // A Database to hold the current state of the server
             private ExampleDatabase database = new ExampleDatabase();
-
+            
             // Version 
             const string APPLICATION_VERSION = "0.0.4";
 
@@ -98,11 +95,16 @@ namespace BACnetServerExample
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyOctetString(CallbackSetPropertyOctetString);
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyBitString(CallbackSetPropertyBitString);
 
+
+                CASBACnetStackAdapter.RegisterCallbackReinitializeDevice(CallbackReinitializeDevice);
+
+
                 // 2. Setup the BACnet device
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
 
                 // Initialize database
                 this.database.Setup();
+                database.NetworkPort.BACnetIPUDPPort = 47808; 
 
                 // Add the device
                 CASBACnetStackAdapter.AddDevice(this.database.Device.instance);
@@ -185,7 +187,7 @@ namespace BACnetServerExample
 
                 // Network port object.
                 CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT, 0);
-
+                CASBACnetStackAdapter.AddNetworkPortObject(database.Device.instance, 0, CASBACnetStackAdapter.NETWORK_PORT_OBJECT_NETWORK_TYPE_IPV4, CASBACnetStackAdapter.PROTOCOL_LEVEL_BACNET_APPLICATION, CASBACnetStackAdapter.NETWORK_PORT_LOWEST_PROTOCOL_LAYER);
 
                 // 4. Enable Services
                 // ---------------------------------------------------------------------------
@@ -195,16 +197,28 @@ namespace BACnetServerExample
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_WRITE_PROPERTY_MULTIPLE, true);
                 CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_SUBSCRIBE_COV, true);
 
+                // Network port
+                CASBACnetStackAdapter.SetServiceEnabled(database.Device.instance, CASBACnetStackAdapter.SERVICE_REINITIALIZE_DEVICE, true);
+
                 // All done with the BACnet setup
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfully");
 
                 // 5. Open the BACnet port to receive messages
 	            // ---------------------------------------------------------------------------
-                this.udpServer = new UdpClient(SETTING_BACNET_PORT);
+                this.udpServer = new UdpClient(database.NetworkPort.BACnetIPUDPPort);
                 this.RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
+                if ( !database.NetworkPort.Set())
+                {
+                    Console.WriteLine("Error: Could not configure the Network Port");
+                    return; 
+                }
+
+                    
+                
+
                 // 6. Start the main loop
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
                 Console.WriteLine("FYI: Starting main loop");
                 for (; ; )
                 {
@@ -631,6 +645,16 @@ namespace BACnetServerExample
                             }
                         }
                         break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0 )
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS)
+                            {
+                                *value = database.NetworkPort.FdBbmdAddressHostType;
+                                return true;
+                            }
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -706,6 +730,24 @@ namespace BACnetServerExample
                             }
                         }
                         break; 
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS)
+                            {
+                                const Byte FD_BBMD_ADDRESS_PORT = 2;
+                                if (useArrayIndex && propertyArrayIndex == FD_BBMD_ADDRESS_PORT)
+                                {
+                                    *value = database.NetworkPort.FdBbmdAddressPort;
+                                    return true;
+                                }
+                            } else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDSUBSCRIPTIONLIFETIME)
+                            {
+                                *value = database.NetworkPort.FdSubscriptionLifetime;
+                                return true;
+                            }
+                        }
+                        break; 
                     default:
                         break;
                 }
@@ -757,6 +799,13 @@ namespace BACnetServerExample
                             Console.WriteLine("FYI: AnalogValue[{0}].outOfService got [{1}]", objectInstance, database.AnalogValue[objectInstance].outOfService);
                             return true;
                         }
+                        break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0 && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_CHANGESPENDING)
+                        {
+                            *value = database.NetworkPort.ChangesPending;
+                            return true;
+                        }                        
                         break;
                     default:
                         break;
@@ -843,9 +892,33 @@ namespace BACnetServerExample
             }
 
             // Callback used by the BACnet Stack to set OctetString property values to the user
-            bool CallbackGetPropertyOctetString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* value, UInt32* valueElementCount, UInt32 maxElementCount, System.Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
+            bool CallbackGetPropertyOctetString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* value, UInt32* valueElementCount, UInt32 maxElementCount, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyOctetString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
+
+                switch (objectType)
+                {
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS)
+                            {
+                                // Network Port FdBbmdAddressOffset
+                                const Byte FD_BBMD_ADDRESS_HOST = 1;
+
+                                if (useArrayIndex && propertyArrayIndex == FD_BBMD_ADDRESS_HOST)
+                                {
+                                    // ToDo: 
+                                    // memcpy (value, g_database . networkPort . FdBbmdAddressHostIp , 4 );
+                                    // *valueElementCount = 4;
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break; 
+                }
+
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
@@ -876,7 +949,7 @@ namespace BACnetServerExample
             }
 
             // Callback used by the BACnet Stack to set Real property values to the user
-            public bool CallbackSetPropertyReal(bool deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, float value, bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
+            public bool CallbackSetPropertyReal(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, float value, bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyReal. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3} value={4}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex, value);
 
@@ -933,7 +1006,24 @@ namespace BACnetServerExample
                                 return true;
                             }
                         }
-                        break; 
+                        break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0)
+                        {
+                            const Byte FD_BBMD_ADDRESS_PORT = 2;
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS && useArrayIndex && propertyArrayIndex == FD_BBMD_ADDRESS_PORT )
+                            {
+                                database.NetworkPort.FdBbmdAddressPort = (UInt16) value;
+                                database.NetworkPort.ChangesPending = true;
+                                return true;
+                            } else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDSUBSCRIPTIONLIFETIME )
+                            {
+                                database.NetworkPort.FdSubscriptionLifetime = (UInt16) value;
+                                database.NetworkPort.ChangesPending = true;
+                                return true;
+                            }
+                        }
+                        break;
                     default:
                         break; 
                 }
@@ -1027,6 +1117,43 @@ namespace BACnetServerExample
             bool CallbackSetPropertyOctetString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* value, UInt32 length, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyOctetString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
+
+                switch (objectType)
+                {
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0 && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS)
+                        {
+                            const Byte FD_BBMD_ADDRESS_HOST = 1;
+                            if (useArrayIndex && propertyArrayIndex == FD_BBMD_ADDRESS_HOST)
+                            {
+                                if(length != 4 )
+                                {
+                                    *errorCode = CASBACnetStackAdapter.ERROR_VALUE_OUT_OF_RANGE;
+                                    return false; 
+                                }
+                                // ToDo: 
+                                /*
+                                if (memcmp(g_database.networkPort.FdBbmdAddressHostIp, value, length) == 0)
+                                {
+                                    // No change, return true
+                                    return true;
+                                }
+                                else
+                                {
+                                    // Store new value and set changes pending to true
+                                    memcpy(g_database.networkPort.FdBbmdAddressHostIp, value, length);
+                                    g_database.networkPort.ChangesPending = true;
+                                    return true;
+                                }
+                                */
+                            }
+                        }
+
+                        break;
+                    default:
+                        break; 
+                }
+
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
@@ -1036,6 +1163,54 @@ namespace BACnetServerExample
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyBitString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
                 Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                return false;
+            }
+
+            bool CallbackReinitializeDevice(UInt32 deviceInstance, UInt32 reinitializedStateOfDevice, System.Byte* password, UInt32 passwordLength, UInt32* errorCode)
+            {
+                Console.WriteLine("FYI: Request for CallbackReinitializeDevice. deviceInstance={0}, reinitializedStateOfDevice={1}", deviceInstance, reinitializedStateOfDevice);
+
+                // This callback is called when this BACnet Server device receives a ReinitializeDevice message
+                // In this callback, you will handle the reinitializedState.
+                // If reinitializedState = ACTIVATE_CHANGES (7) then you will apply any network port changes and store the values in non -volatile memory
+                // If reinitializedState = WARM_START(1) then you will apply any network port changes, store the values in non -volatile memory, and restart the device.
+                // Before handling the reinitializedState, first check the password.
+                // If your device does not require a password, then ignore any password passed in.
+                // Otherwise, validate the password.
+                //     If password invalid: set errorCode to PasswordInvalid (26)
+                //     If password is required, but no password was provided: set errorCode to MissingRequiredParameter(16)
+                // In this example, a password of 12345 is required.
+
+                // ToDo: Check the password. 
+
+                // In this example, only the NetworkPort Object FdBbmdAddress and FdSubscriptionLifetime properties are writable and need to be
+                // stored in non-volatile memory. For the purpose of this example, we will not storing these values in non - volatile memory.
+                // 1. Store values that must be stored in non-volatile memory (i.e. must survive a reboot).
+                // 2. Apply any Network Port values that have been written to. 
+                // If any validation on the Network Port values failes, set errorCode to INVALID_CONFIGURATION_DATA(46)
+                // 3. Set Network Port ChangesPending property to false
+                // 4. Handle ReinitializedState. If ACTIVATE_CHANGES, no other action, return true.
+                // If WARM_START, prepare device for reboot, return true.and reboot.
+                // NOTE: Must return true first before rebooting so the stack sends the SimpleAck.
+
+                if(reinitializedStateOfDevice == CASBACnetStackAdapter.REINITIALIZED_STATE_ACTIVATE_CHANGES)
+                {
+                    database.NetworkPort.ChangesPending = false; 
+                    return true; 
+                } 
+                else if (reinitializedStateOfDevice == CASBACnetStackAdapter.REINITIALIZED_STATE_WARM_START)
+                {
+                    // Flag for reboot and handle reboot after stack responds with SimpleAck.
+                    database.NetworkPort.ChangesPending = false;
+                    return true;
+                } 
+                else
+                {
+                    // All other states are not supported in this example.
+                    *errorCode = CASBACnetStackAdapter.ERROR_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED;
+                    return false; 
+                }
+
                 return false;
             }
         }
