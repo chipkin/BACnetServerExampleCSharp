@@ -14,6 +14,10 @@ using BACnetServerExample;
 using CASBACnetStack;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 
 namespace BACnetServerExample
@@ -58,7 +62,7 @@ namespace BACnetServerExample
             public float[] priorityArrayValues = new float[16];
             public UInt32 units;
             public bool outOfService;
-            public float relinquishDefault; 
+            public float relinquishDefault;
         }
 
         public class ExampleDatabaseAnalogValue : ExampleDatabaseBase
@@ -84,7 +88,7 @@ namespace BACnetServerExample
                 "East (E)", "East by north (EbN)", "Southeast by east (SEbE)", "Southeast by south (SEbS)",
                 "South (S)", "South by east (SbE)", "Southwest by south (SWbS)", "Southwest by west (SWbW)",
                 "West (W)", "West by south (WbS)", "Northwest by west (NWbW)", "Northwest by north (NWbN)",
-                "North by west (NbW)" }; 
+                "North by west (NbW)" };
         }
 
         public class ExampleDatabaseCharacterString : ExampleDatabaseBase
@@ -120,10 +124,109 @@ namespace BACnetServerExample
 
             public void Set(Byte hour, Byte minute, Byte second, Byte hundrethSecond)
             {
-                this.presentValueHour = hour; 
+                this.presentValueHour = hour;
                 this.presentValueMinute = minute;
                 this.presentValueSecond = second;
                 this.presentValueHundrethSecond = hundrethSecond;
+            }
+        }
+
+        public class ExampleDatabaseNetworkPort : ExampleDatabaseBase
+        {
+
+            /*
+             - FdBbmdAddressHostType  - Contains the type of FdBbmdAddressHost. For most implementations this should be 1, which represents an IP Address. 
+                                        The CAS BACnet Stack will poll for this value using the CallbackGetPropertyEnum callback.
+             - FdBbmdAddressHostIp[4] - An octet string of length 4 that contains the IP address of the BBMD in byte form. The CAS BACnet Stack will request 
+                                        this using the CallbackGetPropertyOctetString.
+             - FdBbmdAddressPort      - the BACnet IP port of the BBMD. The CAS BACnet Stack will request this value using the CallbackGetPropertyUInt.
+             - FdSubscriptionLifetime - the ForeignDevice lifetime. The CAS BACnet Stack will request this value using the CallbackGetPropertyUInt.
+             */
+            // Network Port Properties
+            public UInt16 BACnetIPUDPPort;
+            public bool ChangesPending;
+            public Byte FdBbmdAddressHostType; // 0 = None, 1 = IpAddress, 2 = Name
+            public IPAddress FdBbmdAddressHostIp;
+            public UInt16 FdBbmdAddressPort;
+            public UInt16 FdSubscriptionLifetime;
+
+
+            public ExampleDatabaseNetworkPort()
+            {
+                BACnetIPUDPPort = 47808;
+                FdBbmdAddressHostType = 1; // 0 = None, 1 = IpAddress, 2 = Name
+                FdBbmdAddressHostIp = IPAddress.Parse("192.168.1.78");
+                FdBbmdAddressPort = BACnetIPUDPPort;
+                FdSubscriptionLifetime = 60 * 5; 
+
+                ChangesPending = false; 
+            }
+
+
+            // https://stackoverflow.com/a/39338188 
+            public static IPAddress GetBroadcastAddress(IPAddress address, IPAddress mask)
+            {
+                uint ipAddress = BitConverter.ToUInt32(address.GetAddressBytes(), 0);
+                uint ipMaskV4 = BitConverter.ToUInt32(mask.GetAddressBytes(), 0);
+                uint broadCastIpAddress = ipAddress | ~ipMaskV4;
+                return new IPAddress(BitConverter.GetBytes(broadCastIpAddress));
+            }
+
+            public String ToString()
+            {
+                StringBuilder results = new StringBuilder();
+                results.Append("Network Port\n");
+
+                results.Append("  UDP port            : " + BACnetIPUDPPort + "\n");
+
+                // Query the Network interface for the information that we need to setup the Network Port. 
+                var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                    .SelectMany(e => e.GetIPProperties().UnicastAddresses)
+                    .Where(adr => adr.Address.AddressFamily == AddressFamily.InterNetwork && adr.IsDnsEligible)
+                    .FirstOrDefault();
+                if (networkInterface == null)
+                {
+                    Console.WriteLine("Error: Could not find a suitable network interface");
+                    return ""; 
+                }
+
+                results.Append("  IP Address          : " + networkInterface.Address.ToString() + "\n");
+                results.Append("  Subnet Mask         : " + networkInterface.IPv4Mask.ToString() + "\n");
+                results.Append("  Broadcast IP Address: " + GetBroadcastAddress(networkInterface.Address, networkInterface.IPv4Mask) + "\n");
+                results.Append("  Link speed          : " + NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString() + "\n");
+
+                var gatewayAddress = NetworkInterface.GetAllNetworkInterfaces()
+                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                    .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                    .SelectMany(e => e.GetIPProperties().GatewayAddresses)
+                    .Where(e => e.Address.AddressFamily == AddressFamily.InterNetwork)
+                    .FirstOrDefault();
+                if (gatewayAddress == null)
+                {
+                    Console.WriteLine("Error: Could not find a the gateway address");
+                    return "";
+                }
+                results.Append("  Default Gateway     : " + gatewayAddress.Address.ToString() + "\n");
+
+                var dnsAddress = NetworkInterface.GetAllNetworkInterfaces()
+                   .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                   .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                   .SelectMany(e => e.GetIPProperties().DnsAddresses)
+                   .Where(adr => adr.AddressFamily == AddressFamily.InterNetwork )
+                   .ToArray();
+                if (dnsAddress == null)
+                {
+                    Console.WriteLine("Error: Could not find a the DNS address");
+                    return "";
+                }
+
+                results.Append("  DNS\n");
+                foreach (IPAddress dns in dnsAddress )
+                {
+                    results.Append("     IP Address       : " + dns.ToString() + "\n");
+                }
+                return results.ToString(); 
             }
         }
 
@@ -139,6 +242,7 @@ namespace BACnetServerExample
         public ExampleDatabasePositiveIntergerValue[] PositiveIntergerValue;
         public ExampleDatabaseDateValue[] DateValue;
         public ExampleDatabaseTimeValue[] TimeValue;
+        public ExampleDatabaseNetworkPort NetworkPort;
 
 
         // This function returns a unique name for each object. 
@@ -172,6 +276,7 @@ namespace BACnetServerExample
             this.PositiveIntergerValue = new ExampleDatabasePositiveIntergerValue[COUNT_POSITIVE_INTEGER_VALUE];
             this.DateValue = new ExampleDatabaseDateValue[COUNT_DATE_VALUE];
             this.TimeValue = new ExampleDatabaseTimeValue[COUNT_TIME_VALUE];
+            
 
             // Default Values 
             this.Device.name = "Device name Rainbow";
@@ -263,6 +368,11 @@ namespace BACnetServerExample
                 this.TimeValue[offset].name = "TimeValue " + this.GetColorName();
                 this.TimeValue[offset].Set(15, 13, 55, 0);
             }
+
+            // NetworkPort 
+            this.NetworkPort = new ExampleDatabaseNetworkPort();            
+            this.NetworkPort.name = "NetworkPort " + this.GetColorName();
+            this.NetworkPort.BACnetIPUDPPort = 47808;
         }
 
         public void Loop()
