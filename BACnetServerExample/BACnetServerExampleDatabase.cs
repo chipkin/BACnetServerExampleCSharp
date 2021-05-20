@@ -186,7 +186,8 @@ namespace BACnetServerExample
 
                 Console.WriteLine("  IP Address          : {0}", networkInterface.Address.ToString());
                 Console.WriteLine("  Subnet Mask         : {0}", networkInterface.IPv4Mask.ToString());
-                Console.WriteLine("  Broadcast IP Address: {0}", GetBroadcastAddress(networkInterface.Address, networkInterface.IPv4Mask));                
+                Console.WriteLine("  Broadcast IP Address: {0}", GetBroadcastAddress(networkInterface.Address, networkInterface.IPv4Mask));
+                Console.WriteLine("  Link speed          : {0}", NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString());
 
                 var gatewayAddress = NetworkInterface.GetAllNetworkInterfaces()
                     .Where(e => e.OperationalStatus == OperationalStatus.Up)
@@ -271,7 +272,7 @@ namespace BACnetServerExample
             this.PositiveIntergerValue = new ExampleDatabasePositiveIntergerValue[COUNT_POSITIVE_INTEGER_VALUE];
             this.DateValue = new ExampleDatabaseDateValue[COUNT_DATE_VALUE];
             this.TimeValue = new ExampleDatabaseTimeValue[COUNT_TIME_VALUE];
-            this.NetworkPort = new ExampleDatabaseNetworkPort();
+            
 
             // Default Values 
             this.Device.name = "Device name Rainbow";
@@ -364,9 +365,11 @@ namespace BACnetServerExample
                 this.TimeValue[offset].Set(15, 13, 55, 0);
             }
 
-            // 
-            this.NetworkPort.BACnetIPUDPPort = 47808; 
-
+            // NetworkPort 
+            this.NetworkPort = new ExampleDatabaseNetworkPort();            
+            this.NetworkPort.name = "NetworkPort " + this.GetColorName();
+            this.NetworkPort.Set(); 
+            this.NetworkPort.BACnetIPUDPPort = 47808;
         }
 
         public void Loop()

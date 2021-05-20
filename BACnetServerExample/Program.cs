@@ -17,7 +17,9 @@
 
 
 using System;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -44,7 +46,7 @@ namespace BACnetServerExample
 
             // A Database to hold the current state of the server
             private ExampleDatabase database = new ExampleDatabase();
-            
+
             // Version 
             const string APPLICATION_VERSION = "0.0.4";
 
@@ -60,7 +62,7 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.GetAPIBuildVersion());
 
                 // 1. Setup the callbacks
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
 
                 // Send/Receive callbacks
                 CASBACnetStackAdapter.RegisterCallbackSendMessage(SendMessage);
@@ -70,7 +72,7 @@ namespace BACnetServerExample
                 // Get Datatype Callbacks 
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyCharacterString(CallbackGetPropertyCharString);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyReal(CallbackGetPropertyReal);
-                CASBACnetStackAdapter.RegisterCallbackGetPropertyEnumerated(CallbackGetEnumerated);                
+                CASBACnetStackAdapter.RegisterCallbackGetPropertyEnumerated(CallbackGetEnumerated);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyUnsignedInteger(CallbackGetUnsignedInteger);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyBool(CallbackGetPropertyBool);
                 CASBACnetStackAdapter.RegisterCallbackGetPropertyDate(CallbackGetPropertyDate);
@@ -104,13 +106,13 @@ namespace BACnetServerExample
 
                 // Initialize database
                 this.database.Setup();
-                database.NetworkPort.BACnetIPUDPPort = 47808; 
+                database.NetworkPort.BACnetIPUDPPort = 47808;
 
                 // Add the device
                 CASBACnetStackAdapter.AddDevice(this.database.Device.instance);
 
                 // 3. Add Objects
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
 
                 // AnalogInput
                 for (UInt32 offset = 0; offset < this.database.AnalogInput.Length; offset++)
@@ -204,18 +206,9 @@ namespace BACnetServerExample
                 Console.WriteLine("FYI: CAS BACnet Stack Setup, successfully");
 
                 // 5. Open the BACnet port to receive messages
-	            // ---------------------------------------------------------------------------
+                // ---------------------------------------------------------------------------
                 this.udpServer = new UdpClient(database.NetworkPort.BACnetIPUDPPort);
                 this.RemoteIpEndPoint = new IPEndPoint(IPAddress.Any, 0);
-
-                if ( !database.NetworkPort.Set())
-                {
-                    Console.WriteLine("Error: Could not configure the Network Port");
-                    return; 
-                }
-
-                    
-                
 
                 // 6. Start the main loop
                 // ---------------------------------------------------------------------------
@@ -225,7 +218,7 @@ namespace BACnetServerExample
                     CASBACnetStackAdapter.Loop();
 
                     // Update values in the example database
-                    database.Loop(); 
+                    database.Loop();
 
                     // Handle any user input
                     // Note: User input in this example is used for the following:
@@ -400,7 +393,7 @@ namespace BACnetServerExample
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_APPLICATIONSOFTWAREVERSION)
                             {
-                                string version = APPLICATION_VERSION + "." + CIBuildVersion.CIBUILDNUMBER; 
+                                string version = APPLICATION_VERSION + "." + CIBuildVersion.CIBUILDNUMBER;
                                 *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, version);
                                 return true;
                             }
@@ -428,7 +421,7 @@ namespace BACnetServerExample
                             {
                                 *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogOutput[objectInstance].name);
                                 return true;
-                            }                            
+                            }
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_VALUE:
@@ -437,7 +430,7 @@ namespace BACnetServerExample
                             {
                                 *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.AnalogValue[objectInstance].name);
                                 return true;
-                            }                           
+                            }
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_BINARY_INPUT:
@@ -539,7 +532,17 @@ namespace BACnetServerExample
                             }
                         }
                         break;
-                        
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_OBJECT_NAME)
+                            {
+                                *valueElementCount = CASBACnetStackAdapter.UpdateStringAndReturnSize(value, maxElementCount, database.NetworkPort.name);
+                                return true;
+                            }
+                        }
+                        break;
+
                     default:
                         break;
                 }
@@ -575,13 +578,13 @@ namespace BACnetServerExample
                                     return true;
                                 }
                             }
-                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_RELINQUISHDEFAULT )
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_RELINQUISHDEFAULT)
                             {
                                 *value = database.AnalogOutput[objectInstance].relinquishDefault;
                                 return true;
                             }
                         }
-                        break; 
+                        break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_VALUE:
                         if (objectInstance < database.AnalogValue.Length) {
                             *value = database.AnalogValue[objectInstance].presentValue;
@@ -589,6 +592,19 @@ namespace BACnetServerExample
                             return true;
                         }
                         break;
+                    case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
+                        if (objectInstance == 0)
+                        {
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_LINKSPEED )
+                            {
+                                Console.WriteLine("  Link speed          : {0}", NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString());
+                                *value = (float) NetworkInterface.GetAllNetworkInterfaces()[0].Speed;
+                                return true;
+                            }
+                        }
+                        break;
+
+                        
                     default:
                         break;
                 }
@@ -610,7 +626,7 @@ namespace BACnetServerExample
                                 *value = (UInt32)(database.BinaryInput[objectInstance].presentValue ? 1 : 0);
                                 Console.WriteLine("FYI: BinaryInput[{0}].value got [{1}]", objectInstance, database.BinaryInput[objectInstance].presentValue);
                                 return true;
-                            }                             
+                            }
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_BINARY_VALUE:
@@ -646,7 +662,7 @@ namespace BACnetServerExample
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
-                        if (objectInstance == 0 )
+                        if (objectInstance == 0)
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS)
                             {
@@ -729,7 +745,7 @@ namespace BACnetServerExample
                                 return true;
                             }
                         }
-                        break; 
+                        break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
                         if (objectInstance == 0)
                         {
@@ -741,13 +757,36 @@ namespace BACnetServerExample
                                     *value = database.NetworkPort.FdBbmdAddressPort;
                                     return true;
                                 }
-                            } else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDSUBSCRIPTIONLIFETIME)
+                            } 
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDSUBSCRIPTIONLIFETIME)
                             {
                                 *value = database.NetworkPort.FdSubscriptionLifetime;
                                 return true;
                             }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPDNSSERVER && useArrayIndex && propertyArrayIndex == 0)
+                            {
+                                var dnsAddress = NetworkInterface.GetAllNetworkInterfaces()
+                                   .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                                   .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                                   .SelectMany(e => e.GetIPProperties().DnsAddresses)
+                                   .Where(adr => adr.AddressFamily == AddressFamily.InterNetwork)
+                                   .ToArray();
+                                if (dnsAddress == null)
+                                {
+                                    Console.WriteLine("Error: Could not find a the DNS address");
+                                    return false;
+                                }
+
+                                *value = (UInt32) dnsAddress.Length;
+                                return true; 
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_BACNETIPUDPPORT)
+                            {
+                                *value = database.NetworkPort.BACnetIPUDPPort;
+                                return true;
+                            }
                         }
-                        break; 
+                        break;
                     default:
                         break;
                 }
@@ -770,7 +809,7 @@ namespace BACnetServerExample
                                 *value = database.AnalogInput[objectInstance].outOfService;
                                 Console.WriteLine("FYI: AnalogInput[{0}].outOfService got [{1}]", objectInstance, database.AnalogInput[objectInstance].outOfService);
                                 return true;
-                            }                            
+                            }
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_OUTPUT:
@@ -784,10 +823,10 @@ namespace BACnetServerExample
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRIORITY_ARRAY && useArrayIndex)
                             {
-                                if(propertyArrayIndex <= database.AnalogOutput[objectInstance].priorityArrayNulls.Length)
+                                if (propertyArrayIndex <= database.AnalogOutput[objectInstance].priorityArrayNulls.Length)
                                 {
                                     *value = database.AnalogOutput[objectInstance].priorityArrayNulls[propertyArrayIndex - 1];
-                                    return true; 
+                                    return true;
                                 }
                             }
                         }
@@ -801,10 +840,12 @@ namespace BACnetServerExample
                         }
                         break;
                     case CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT:
-                        if (objectInstance == 0 && propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_CHANGESPENDING)
+                        if (objectInstance == 0)
                         {
-                            *value = database.NetworkPort.ChangesPending;
-                            return true;
+                            if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_CHANGESPENDING) {                            
+                                *value = database.NetworkPort.ChangesPending;
+                                return true;
+                            }
                         }                        
                         break;
                     default:
@@ -913,6 +954,78 @@ namespace BACnetServerExample
                                     // *valueElementCount = 4;
                                 }
                             }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPADDRESS)
+                            {
+                                // Query the Network interface for the information that we need to setup the Network Port. 
+                                var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
+                                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                                    .SelectMany(e => e.GetIPProperties().UnicastAddresses)
+                                    .Where(adr => adr.Address.AddressFamily == AddressFamily.InterNetwork && adr.IsDnsEligible)
+                                    .FirstOrDefault();
+                                if (networkInterface == null)
+                                {
+                                    Console.WriteLine("Error: Could not find a suitable network interface");
+                                    return false;
+                                }
+
+                                Console.WriteLine("  IP Address          : {0}", networkInterface.Address.ToString());
+                                *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, networkInterface.Address.GetAddressBytes() );
+                                return true; 
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPDEFAULTGATEWAY)
+                            {
+                                var gatewayAddress = NetworkInterface.GetAllNetworkInterfaces()
+                                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                                    .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                                    .SelectMany(e => e.GetIPProperties().GatewayAddresses)
+                                    .FirstOrDefault();
+                                if (gatewayAddress == null)
+                                {
+                                    Console.WriteLine("Error: Could not find a the gateway address");
+                                    return false;
+                                }
+                                Console.WriteLine("  Default Gateway     : {0}", gatewayAddress.Address.ToString());
+                                *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, gatewayAddress.Address.GetAddressBytes());
+                                return true; 
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPDNSSERVER && useArrayIndex)
+                            {
+                                var dnsAddress = NetworkInterface.GetAllNetworkInterfaces()
+                                   .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                                   .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                                   .SelectMany(e => e.GetIPProperties().DnsAddresses)
+                                   .Where(adr => adr.AddressFamily == AddressFamily.InterNetwork)
+                                   .ToArray();
+                                if (dnsAddress == null) {
+                                    Console.WriteLine("Error: Could not find a the DNS address");
+                                    return false;
+                                }
+
+                                if(dnsAddress.Length >= propertyArrayIndex-1)
+                                {
+                                    Console.WriteLine("  DNS: " + dnsAddress[propertyArrayIndex - 1].ToString() );
+                                    *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, dnsAddress[propertyArrayIndex - 1].GetAddressBytes());
+                                    return true;                                     
+                                }
+                            }
+                            else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPSUBNETMASK )
+                            {
+                                // Query the Network interface for the information that we need to setup the Network Port. 
+                                var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
+                                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
+                                    .SelectMany(e => e.GetIPProperties().UnicastAddresses)
+                                    .Where(adr => adr.Address.AddressFamily == AddressFamily.InterNetwork && adr.IsDnsEligible)
+                                    .FirstOrDefault();
+                                if (networkInterface == null)
+                                {
+                                    Console.WriteLine("Error: Could not find a suitable network interface");
+                                    return false;
+                                }
+
+                                Console.WriteLine("  Subnet Mask         : {0}", networkInterface.IPv4Mask.ToString());
+                                *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, networkInterface.IPv4Mask.GetAddressBytes());
+                                return true; 
+                            }                            
                         }
                         break;
                     default:
