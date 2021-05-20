@@ -12,7 +12,7 @@
  * 
  * Created by: Steven Smethurst
  * Created on: June 7, 2019 
- * Last updated: June 19, 2020
+ * Last updated: May 19, 2021
 */
 
 
@@ -29,7 +29,6 @@ namespace BACnetServerExample
 {
     class Program
     {
-
         // Main function
         static void Main(string[] args)
         {
@@ -48,7 +47,7 @@ namespace BACnetServerExample
             private ExampleDatabase database = new ExampleDatabase();
 
             // Version 
-            const string APPLICATION_VERSION = "0.0.4";
+            const string APPLICATION_VERSION = "0.0.5";
 
             // Server setup and main loop
             public void Run()
@@ -97,7 +96,6 @@ namespace BACnetServerExample
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyOctetString(CallbackSetPropertyOctetString);
                 CASBACnetStackAdapter.RegisterCallbackSetPropertyBitString(CallbackSetPropertyBitString);
 
-
                 CASBACnetStackAdapter.RegisterCallbackReinitializeDevice(CallbackReinitializeDevice);
 
 
@@ -107,6 +105,7 @@ namespace BACnetServerExample
                 // Initialize database
                 this.database.Setup();
                 database.NetworkPort.BACnetIPUDPPort = 47808;
+                Console.WriteLine(database.NetworkPort.ToString());
 
                 // Add the device
                 CASBACnetStackAdapter.AddDevice(this.database.Device.instance);
@@ -213,6 +212,8 @@ namespace BACnetServerExample
                 // 6. Start the main loop
                 // ---------------------------------------------------------------------------
                 Console.WriteLine("FYI: Starting main loop");
+                PrintHelp(); 
+
                 for (; ; )
                 {
                     CASBACnetStackAdapter.Loop();
@@ -234,6 +235,23 @@ namespace BACnetServerExample
                 }
             }
 
+            private void PrintHelp()
+            {
+                Console.WriteLine("\nBACnetServerExampleCSharp version: {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
+                Console.WriteLine("BACnet Stack version: {0}.{1}.{2}.{3}",
+                    CASBACnetStackAdapter.GetAPIMajorVersion(),
+                    CASBACnetStackAdapter.GetAPIMinorVersion(),
+                    CASBACnetStackAdapter.GetAPIPatchVersion(),
+                    CASBACnetStackAdapter.GetAPIBuildVersion());
+
+                Console.WriteLine("https://github.com/chipkin/BACnetServerExampleCSharp");
+                Console.WriteLine("Menu");
+                Console.WriteLine("H          - Display the help menu");
+                Console.WriteLine("Up Arrow   - Increment the Analog Input 0 property");
+                Console.WriteLine("Down Arrow - Decrement the Analog Input 0 property");
+                Console.WriteLine("Q          - Quit the program");
+            }
+
             // Handle user input. Return false if quitting program.
             private bool DoUserInput()
             {
@@ -242,21 +260,10 @@ namespace BACnetServerExample
                     ConsoleKeyInfo key = Console.ReadKey(true);
                     switch (key.Key)
                     {
-
                         // Display help menu and version information
+                        default:
                         case ConsoleKey.H:
-                            Console.WriteLine("\nBACnetServerExampleCSharp version: {0}.{1}", APPLICATION_VERSION, CIBuildVersion.CIBUILDNUMBER);
-                            Console.WriteLine("BACnet Stack version: {0}.{1}.{2}.{3}",
-                                CASBACnetStackAdapter.GetAPIMajorVersion(),
-                                CASBACnetStackAdapter.GetAPIMinorVersion(),
-                                CASBACnetStackAdapter.GetAPIPatchVersion(),
-                                CASBACnetStackAdapter.GetAPIBuildVersion());
-
-                            Console.WriteLine("https://github.com/chipkin/BACnetServerExampleCSharp");
-                            Console.WriteLine("H  - Display the help menu");
-                            Console.WriteLine("Up Arrow - Increment the Analog Input 0 property");
-                            Console.WriteLine("Down Arrow - Decrement the Analog Input 0 property");
-                            Console.WriteLine("Q - Quit the program");
+                            PrintHelp();
                             break;
 
                         // Increment the analog input
@@ -286,9 +293,6 @@ namespace BACnetServerExample
                         case ConsoleKey.Q:
                             Console.WriteLine("\nQuitting...", 0, this.database.AnalogInput[0].presentValue);
                             return false;
-
-                        default:
-                            break;
                     }
                 }
                 return true;
@@ -547,7 +551,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; // Could not handle this request. 
             }
 
@@ -597,7 +601,7 @@ namespace BACnetServerExample
                         {
                             if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_LINKSPEED )
                             {
-                                Console.WriteLine("  Link speed          : {0}", NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString());
+                                Console.WriteLine("Link speed          : {0}", NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString());
                                 *value = (float) NetworkInterface.GetAllNetworkInterfaces()[0].Speed;
                                 return true;
                             }
@@ -609,7 +613,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -675,7 +679,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -790,7 +794,7 @@ namespace BACnetServerExample
                     default:
                         break;
                 }
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -852,7 +856,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -883,7 +887,7 @@ namespace BACnetServerExample
                 }
 
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -891,7 +895,7 @@ namespace BACnetServerExample
             bool CallbackGetPropertyDouble(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Double* value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertyDouble. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -899,7 +903,7 @@ namespace BACnetServerExample
             bool CallbackGetPropertySignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Int32* value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
             {
                 Console.WriteLine("FYI: Request for CallbackGetPropertySignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
             bool CallbackGetPropertyTime(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte* hour, Byte* minute, Byte* second, Byte* hundrethSeconds, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex)
@@ -928,7 +932,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -949,9 +953,9 @@ namespace BACnetServerExample
 
                                 if (useArrayIndex && propertyArrayIndex == FD_BBMD_ADDRESS_HOST)
                                 {
-                                    // ToDo: 
-                                    // memcpy (value, g_database . networkPort . FdBbmdAddressHostIp , 4 );
-                                    // *valueElementCount = 4;
+                                    Console.WriteLine("BBMD_ADDRESS_HOST   : {0}", database.NetworkPort.FdBbmdAddressHostIp.ToString());
+                                    *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, database.NetworkPort.FdBbmdAddressHostIp.GetAddressBytes());
+                                    return true; 
                                 }
                             }
                             else if (propertyIdentifier == CASBACnetStackAdapter.PROPERTY_IDENTIFIER_IPADDRESS)
@@ -968,7 +972,7 @@ namespace BACnetServerExample
                                     return false;
                                 }
 
-                                Console.WriteLine("  IP Address          : {0}", networkInterface.Address.ToString());
+                                Console.WriteLine("IP Address          : {0}", networkInterface.Address.ToString());
                                 *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, networkInterface.Address.GetAddressBytes() );
                                 return true; 
                             }
@@ -984,7 +988,7 @@ namespace BACnetServerExample
                                     Console.WriteLine("Error: Could not find a the gateway address");
                                     return false;
                                 }
-                                Console.WriteLine("  Default Gateway     : {0}", gatewayAddress.Address.ToString());
+                                Console.WriteLine("Default Gateway     : {0}", gatewayAddress.Address.ToString());
                                 *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, gatewayAddress.Address.GetAddressBytes());
                                 return true; 
                             }
@@ -1003,7 +1007,7 @@ namespace BACnetServerExample
 
                                 if(dnsAddress.Length >= propertyArrayIndex-1)
                                 {
-                                    Console.WriteLine("  DNS: " + dnsAddress[propertyArrayIndex - 1].ToString() );
+                                    Console.WriteLine("DNS: " + dnsAddress[propertyArrayIndex - 1].ToString() );
                                     *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, dnsAddress[propertyArrayIndex - 1].GetAddressBytes());
                                     return true;                                     
                                 }
@@ -1022,7 +1026,7 @@ namespace BACnetServerExample
                                     return false;
                                 }
 
-                                Console.WriteLine("  Subnet Mask         : {0}", networkInterface.IPv4Mask.ToString());
+                                Console.WriteLine("Subnet Mask         : {0}", networkInterface.IPv4Mask.ToString());
                                 *valueElementCount = CASBACnetStackAdapter.UpdateOctetStringAndReturnSize(value, maxElementCount, networkInterface.IPv4Mask.GetAddressBytes());
                                 return true; 
                             }                            
@@ -1032,7 +1036,7 @@ namespace BACnetServerExample
                         break; 
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1057,7 +1061,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1098,7 +1102,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1141,7 +1145,7 @@ namespace BACnetServerExample
                         break; 
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
 
@@ -1174,7 +1178,7 @@ namespace BACnetServerExample
                         break;
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
 
@@ -1182,7 +1186,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertySignedInteger(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Int32 value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertySignedInteger. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1190,7 +1194,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyDouble(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Double value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyDouble. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
 
@@ -1198,7 +1202,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyBool(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool value, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyBool. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
             return false; 
             }
 
@@ -1206,7 +1210,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyTime(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte hour, Byte minute, Byte second, Byte hundrethSeconds, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyTime. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
 
@@ -1214,7 +1218,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyDate(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, Byte year, Byte month, Byte day, Byte weekday, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyDate. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false; 
             }
 
@@ -1222,7 +1226,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyCharacterString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, System.Byte* value, UInt32 length, Byte encodingType, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyCharacterString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1244,21 +1248,11 @@ namespace BACnetServerExample
                                     *errorCode = CASBACnetStackAdapter.ERROR_VALUE_OUT_OF_RANGE;
                                     return false; 
                                 }
-                                // ToDo: 
-                                /*
-                                if (memcmp(g_database.networkPort.FdBbmdAddressHostIp, value, length) == 0)
-                                {
-                                    // No change, return true
-                                    return true;
-                                }
-                                else
-                                {
-                                    // Store new value and set changes pending to true
-                                    memcpy(g_database.networkPort.FdBbmdAddressHostIp, value, length);
-                                    g_database.networkPort.ChangesPending = true;
-                                    return true;
-                                }
-                                */
+
+                                // ToDo: Test this 
+                                database.NetworkPort.FdBbmdAddressHostIp = new IPAddress(CASBACnetStackAdapter.IntPtrToByteArray(value, length));
+                                database.NetworkPort.ChangesPending = true; 
+                                return true; 
                             }
                         }
 
@@ -1267,7 +1261,7 @@ namespace BACnetServerExample
                         break; 
                 }
 
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1275,7 +1269,7 @@ namespace BACnetServerExample
             bool CallbackSetPropertyBitString(UInt32 deviceInstance, UInt16 objectType, UInt32 objectInstance, UInt32 propertyIdentifier, bool* value, UInt32 length, [In, MarshalAs(UnmanagedType.I1)] bool useArrayIndex, UInt32 propertyArrayIndex, System.Byte priority, UInt32* errorCode)
             {
                 Console.WriteLine("FYI: Request for CallbackSetPropertyBitString. objectType={0}, objectInstance={1}, propertyIdentifier={2}, propertyArrayIndex={3}", objectType, objectInstance, propertyIdentifier, propertyArrayIndex);
-                Console.WriteLine("   FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
+                Console.WriteLine(" FYI: Not implmented. propertyIdentifier={0}", propertyIdentifier);
                 return false;
             }
 
@@ -1294,7 +1288,18 @@ namespace BACnetServerExample
                 //     If password is required, but no password was provided: set errorCode to MissingRequiredParameter(16)
                 // In this example, a password of 12345 is required.
 
-                // ToDo: Check the password. 
+                if(passwordLength == 0 )
+                {
+                    Console.WriteLine("Error: Password required. ERROR_MISSING_REQUIRED_PARAMETER");
+                    *errorCode = CASBACnetStackAdapter.ERROR_MISSING_REQUIRED_PARAMETER;
+                    return false;
+                }
+                if( CASBACnetStackAdapter.ASCIIBufferAsString(password, passwordLength) != "1234" )
+                {
+                    Console.WriteLine("Error: Password does not match. ERROR_PASSWORD_FAILURE");
+                    *errorCode = CASBACnetStackAdapter.ERROR_PASSWORD_FAILURE; 
+                    return false; 
+                }
 
                 // In this example, only the NetworkPort Object FdBbmdAddress and FdSubscriptionLifetime properties are writable and need to be
                 // stored in non-volatile memory. For the purpose of this example, we will not storing these values in non - volatile memory.
@@ -1306,7 +1311,7 @@ namespace BACnetServerExample
                 // If WARM_START, prepare device for reboot, return true.and reboot.
                 // NOTE: Must return true first before rebooting so the stack sends the SimpleAck.
 
-                if(reinitializedStateOfDevice == CASBACnetStackAdapter.REINITIALIZED_STATE_ACTIVATE_CHANGES)
+                if (reinitializedStateOfDevice == CASBACnetStackAdapter.REINITIALIZED_STATE_ACTIVATE_CHANGES)
                 {
                     database.NetworkPort.ChangesPending = false; 
                     return true; 
@@ -1317,14 +1322,10 @@ namespace BACnetServerExample
                     database.NetworkPort.ChangesPending = false;
                     return true;
                 } 
-                else
-                {
-                    // All other states are not supported in this example.
-                    *errorCode = CASBACnetStackAdapter.ERROR_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED;
-                    return false; 
-                }
 
-                return false;
+                // All other states are not supported in this example.
+                *errorCode = CASBACnetStackAdapter.ERROR_OPTIONAL_FUNCTIONALITY_NOT_SUPPORTED;
+                return false; 
             }
         }
     }

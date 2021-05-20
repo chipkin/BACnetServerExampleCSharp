@@ -154,6 +154,7 @@ namespace BACnetServerExample
             public ExampleDatabaseNetworkPort()
             {
                 BACnetIPUDPPort = 47808;
+                FdBbmdAddressHostType = 1; // 0 = None, 1 = IpAddress, 2 = Name
                 ChangesPending = false; 
             }
 
@@ -167,10 +168,12 @@ namespace BACnetServerExample
                 return new IPAddress(BitConverter.GetBytes(broadCastIpAddress));
             }
 
-            public bool Set()
+            public String ToString()
             {
-                Console.WriteLine("Network Port");
-                Console.WriteLine("  UDP port            : {0}", BACnetIPUDPPort);
+                StringBuilder results = new StringBuilder();
+                results.Append("Network Port\n");
+
+                results.Append("  UDP port            : " + BACnetIPUDPPort + "\n");
 
                 // Query the Network interface for the information that we need to setup the Network Port. 
                 var networkInterface = NetworkInterface.GetAllNetworkInterfaces()
@@ -181,13 +184,13 @@ namespace BACnetServerExample
                 if (networkInterface == null)
                 {
                     Console.WriteLine("Error: Could not find a suitable network interface");
-                    return false; 
+                    return ""; 
                 }
 
-                Console.WriteLine("  IP Address          : {0}", networkInterface.Address.ToString());
-                Console.WriteLine("  Subnet Mask         : {0}", networkInterface.IPv4Mask.ToString());
-                Console.WriteLine("  Broadcast IP Address: {0}", GetBroadcastAddress(networkInterface.Address, networkInterface.IPv4Mask));
-                Console.WriteLine("  Link speed          : {0}", NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString());
+                results.Append("  IP Address          : " + networkInterface.Address.ToString() + "\n");
+                results.Append("  Subnet Mask         : " + networkInterface.IPv4Mask.ToString() + "\n");
+                results.Append("  Broadcast IP Address: " + GetBroadcastAddress(networkInterface.Address, networkInterface.IPv4Mask) + "\n");
+                results.Append("  Link speed          : " + NetworkInterface.GetAllNetworkInterfaces()[0].Speed.ToString() + "\n");
 
                 var gatewayAddress = NetworkInterface.GetAllNetworkInterfaces()
                     .Where(e => e.OperationalStatus == OperationalStatus.Up)
@@ -197,9 +200,9 @@ namespace BACnetServerExample
                 if (gatewayAddress == null)
                 {
                     Console.WriteLine("Error: Could not find a the gateway address");
-                    return false;
+                    return "";
                 }
-                Console.WriteLine("  Default Gateway     : {0}", gatewayAddress.Address.ToString());
+                results.Append("  Default Gateway     : " + gatewayAddress.Address.ToString() + "\n");
 
                 var dnsAddress = NetworkInterface.GetAllNetworkInterfaces()
                    .Where(e => e.OperationalStatus == OperationalStatus.Up)
@@ -210,19 +213,15 @@ namespace BACnetServerExample
                 if (dnsAddress == null)
                 {
                     Console.WriteLine("Error: Could not find a the DNS address");
-                    return false;
+                    return "";
                 }
 
-                Console.WriteLine("  DNS");
+                results.Append("  DNS\n");
                 foreach (IPAddress dns in dnsAddress )
                 {
-                    Console.WriteLine("     IP Address       : {0}", dns.ToString());
+                    results.Append("     IP Address       : " + dns.ToString() + "\n");
                 }
-
-                
-
-
-                return true; 
+                return results.ToString(); 
             }
         }
 
@@ -368,7 +367,6 @@ namespace BACnetServerExample
             // NetworkPort 
             this.NetworkPort = new ExampleDatabaseNetworkPort();            
             this.NetworkPort.name = "NetworkPort " + this.GetColorName();
-            this.NetworkPort.Set(); 
             this.NetworkPort.BACnetIPUDPPort = 47808;
         }
 

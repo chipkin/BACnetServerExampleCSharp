@@ -2,6 +2,11 @@
 
 ## Version 0.0.x
 
+### 0.0.5 (2021-May-19)
+
+- Updated to CAS BACnet stack version 3.19.0.x
+- Added support for Network Port object
+
 ### 0.0.4 (2020-Sep-25)
 
 - Updated to CAS BACnet stack version 3.19.0.x
