@@ -187,8 +187,9 @@ namespace BACnetServerExample
                 }
 
                 // Network port object.
-                CASBACnetStackAdapter.AddObject(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT, 0);
                 CASBACnetStackAdapter.AddNetworkPortObject(database.Device.instance, 0, CASBACnetStackAdapter.NETWORK_PORT_OBJECT_NETWORK_TYPE_IPV4, CASBACnetStackAdapter.PROTOCOL_LEVEL_BACNET_APPLICATION, CASBACnetStackAdapter.NETWORK_PORT_LOWEST_PROTOCOL_LAYER);
+                // CASBACnetStackAdapter.SetPropertyEnabled(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDBBMDADDRESS, true);
+                // CASBACnetStackAdapter.SetPropertyEnabled(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_NETWORK_PORT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_FDSUBSCRIPTIONLIFETIME, true);
 
                 // 4. Enable Services
                 // ---------------------------------------------------------------------------
@@ -249,7 +250,16 @@ namespace BACnetServerExample
                 Console.WriteLine("H          - Display the help menu");
                 Console.WriteLine("Up Arrow   - Increment the Analog Input 0 property");
                 Console.WriteLine("Down Arrow - Decrement the Analog Input 0 property");
+                Console.WriteLine("F          - Send foreign device registration");
                 Console.WriteLine("Q          - Quit the program");
+            }
+
+            private byte* PointerData(byte[] safe)
+            {
+                fixed (byte* converted = safe)
+                {
+                    return converted;
+                }
             }
 
             // Handle user input. Return false if quitting program.
@@ -287,6 +297,23 @@ namespace BACnetServerExample
                                 Console.WriteLine("\nFYI: Decrement Analog input {0} present value to {1:0.00}", 0, this.database.AnalogInput[0].presentValue);
                                 CASBACnetStackAdapter.ValueUpdated(database.Device.instance, CASBACnetStackAdapter.OBJECT_TYPE_ANALOG_INPUT, 0, CASBACnetStackAdapter.PROPERTY_IDENTIFIER_PRESENT_VALUE);
                             }
+                            break;
+
+                        // Decrement the analog input 
+                        case ConsoleKey.F:
+
+                            Console.WriteLine("\nFYI: Sending RegisterForeignDevice IP: {0}, Port: {1}", this.database.NetworkPort.FdBbmdAddressHostIp.ToString(), this.database.NetworkPort.FdBbmdAddressPort);
+
+                            byte[] connectionStringAsBytes = new byte[6];
+                            Buffer.BlockCopy(this.database.NetworkPort.FdBbmdAddressHostIp.GetAddressBytes(), 0, connectionStringAsBytes, 0, 4);
+                            Buffer.BlockCopy(BitConverter.GetBytes(this.database.NetworkPort.FdBbmdAddressPort), 0, connectionStringAsBytes, 4, 2);
+
+                            byte* connectionStringPointer = PointerData(connectionStringAsBytes);
+                            if( ! CASBACnetStackAdapter.SendRegisterForeignDevice(this.database.NetworkPort.FdSubscriptionLifetime, connectionStringPointer, (byte) connectionStringAsBytes.Length) )
+                            {
+                                Console.WriteLine("\nError: Could not send RegisterForeignDevice");  
+                            }
+
                             break;
 
                         // Quit the program

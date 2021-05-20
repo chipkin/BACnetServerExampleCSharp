@@ -155,6 +155,10 @@ namespace BACnetServerExample
             {
                 BACnetIPUDPPort = 47808;
                 FdBbmdAddressHostType = 1; // 0 = None, 1 = IpAddress, 2 = Name
+                FdBbmdAddressHostIp = IPAddress.Parse("192.168.1.78");
+                FdBbmdAddressPort = BACnetIPUDPPort;
+                FdSubscriptionLifetime = 60 * 5; 
+
                 ChangesPending = false; 
             }
 
@@ -196,6 +200,7 @@ namespace BACnetServerExample
                     .Where(e => e.OperationalStatus == OperationalStatus.Up)
                     .Where(e => e.NetworkInterfaceType != NetworkInterfaceType.Loopback)
                     .SelectMany(e => e.GetIPProperties().GatewayAddresses)
+                    .Where(e => e.Address.AddressFamily == AddressFamily.InterNetwork)
                     .FirstOrDefault();
                 if (gatewayAddress == null)
                 {
